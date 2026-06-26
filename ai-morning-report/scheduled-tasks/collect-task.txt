@@ -1,0 +1,75 @@
+执行今日 AI 情报日报 · AI早报-1采集。日期：2026-06-18（Asia/Shanghai）。
+
+严格按下方规范执行，不得省略章节、不得降级为简版 bullet。
+**成稿只输出在本 LobeHub 对话**，不投递飞书。禁止反问、禁止要求用户上传文件。
+LobeHub 无文件工具时，用 `---素材槽位N---` / `---分段:国际---` 等在回复中分段记录，供后续任务 read。
+
+# 阶段 1 · 采集（仅本任务）
+
+将 `2026-06-18` 替换为今日日期（Asia/Shanghai）。
+
+## 任务
+**只做采集，禁止写日报正文、禁止发飞书。**
+
+1. 按下方「18 槽位」顺序，每槽最多 1 次 `web_search` 或 `web_fetch`；失败即跳过，禁止重试。
+2. 每槽结束后，把压缩要点**追加**写入 `memory/2026-06-18/2026-06-18-素材.md`。
+3. 每槽 3–8 行格式：槽位N | 事件标题 | 日期 | 关键数字 | 来源 URL | 拟写入章节（国际/国内/资本/工具/活动/数据板）
+4. **禁止**在回复里粘贴大段搜索结果原文。
+5. 18 槽完成后，回复一行 `MATERIAL_OK` 并给出素材文件路径。
+
+## 固定源清单 + 18 槽位
+（与完整规范一致，禁止自由泛搜）
+
+### A. 国际新闻 / 深度
+- TechCrunch AI: https://techcrunch.com/category/artificial-intelligence/
+- VentureBeat AI: https://venturebeat.com/category/ai/
+- The Verge AI: https://www.theverge.com/ai-artificial-intelligence
+- MIT Technology Review AI: https://www.technologyreview.com/topic/artificial-intelligence/
+- SemiAnalysis: https://www.semianalysis.com/
+- Artificial Analysis: https://artificialanalysis.ai/
+
+### B. 研究 / 模型 / 开源
+- Hugging Face Daily Papers / Trending Models, Papers With Code, GitHub Trending, OSS Insight AI, Product Hunt AI, Hacker News
+
+### C. X（近 48h，固定账号）
+@OpenAI @AnthropicAI @GoogleDeepMind @nvidia @MetaAI @karpathy @ylecun @swyx @emollick @simonw @OpenClaw @cursor_ai @LangChainAI
+
+### D. YouTube（近 7 天，按日轮换频道）
+AI Explained, Latent Space, Two Minute Papers, NVIDIA, Microsoft Research, Matthew Berman, Fireship
+
+### E. 国内媒体
+36氪 AI、量子位、机器之心、新智元、极客公园、晚点、甲子光年、InfoQ 中文、AI 科技评论
+
+### F. 公众号（每期 ≥3 不同作者）
+极客公园、DataWhale、量子位、机器之心、新智元、歸藏、刘小排、花叔、卡兹克、赛博禅心、Founder Park 等
+
+### G. 国内平台（按日轮换）
+B站 / 知乎 / 小红书 AI 热度
+
+### H. 融资 / 活动
+IT桔子、Luma、Devpost
+
+| 槽位 | 固定任务 |
+|------|----------|
+| 1 | TechCrunch AI 或 VentureBeat AI |
+| 2 | The Verge AI 或 MIT Technology Review AI |
+| 3 | SemiAnalysis 或 Artificial Analysis |
+| 4 | GitHub Trending + OSS Insight AI |
+| 5 | Hugging Face papers 或 trending models |
+| 6 | Product Hunt AI 或 Hacker News |
+| 7 | X 固定账号近 48h |
+| 8 | YouTube 固定频道近 7 天 |
+| 9 | 量子位 或 机器之心 |
+| 10 | 36氪 或 晚点 LatePost |
+| 11 | 极客公园 或 新智元 |
+| 12 | 甲子光年 或 InfoQ 中文 |
+| 13 | 公众号轮询（周一歸藏…周日 Founder Park） |
+| 14 | B站/知乎/小红书轮换 |
+| 15 | Luma AI 活动 |
+| 16 | Devpost AI hackathon |
+| 17 | IT桔子 AI 融资 |
+| 18 | 36氪融资 或 TechCrunch funding |
+
+## 输出
+- 唯一产出：`memory/2026-06-18/2026-06-18-素材.md`
+

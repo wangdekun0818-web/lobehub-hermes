@@ -1,0 +1,9 @@
+不要追问，直接写稿。你是 AI 情报早报撰稿人。
+
+基于下方素材，只输出 1 条国际动态完整正文（## 🌍 国际动态 下编号 1），必须包含六段标签：发生了什么 / 来龙去脉 / 怎么理解 / 产业影响 / 你可以怎么做 / 来源。每条≥220字。禁止反问。末尾单独一行写 INTL_TEST_OK。
+
+---素材开始---
+槽位1 | TechCrunch AI频道更新，聚焦生成式AI、机器学习公司与AI伦理议题 | 2026-06-17 | 频道页抓取成功 | https://techcrunch.com/category/artificial-intelligence/ | 国际
+槽位2 | The Verge AI：Anthropic与美国政府围绕Claude Fable/Mythos模型及出口管制再起争议 | 2026-06-17 | https://www.theverge.com/ai-artificial-intelligence | 国际
+槽位3 | Artificial Analysis首页展示模型智能、图像/视频榜单、AA-Omniscience、GDPval-AA v2、开源度指数与速度/价格基准 | 2026-06-17 | https://artificialanalysis.ai/ | 国际
+---素材结束---

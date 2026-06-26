@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# 修复 LobeHub 浏览器 403：清掉错误的 aicoming.top / 客户端直连配置
+set -euo pipefail
+echo "=============================================="
+echo " LobeHub 403 修复（浏览器本地配置）"
+echo "=============================================="
+echo ""
+echo "服务端 Docker 已配好 AIComing，403 来自浏览器里旧配置。"
+echo "错误特征：endpoint 为 https://aicoming.top/v1（缺 api. 子域名）"
+echo ""
+echo "请在你自己打开 LobeHub 的浏览器里操作（Chrome/Safari 等）："
+echo ""
+echo "【方案 A · 推荐】重置浏览器设置"
+echo "  1. 打开 http://127.0.0.1:3010/settings?active=storage"
+echo "  2. 点「立即重置」→「确定」"
+echo "  3. 不要开「客户端请求模式」，UI 里 Key/代理可留空"
+echo ""
+echo "【方案 B】手动改 OpenAI 设置"
+echo "  打开 http://127.0.0.1:3010/settings?active=llm"
+echo "  · 客户端请求模式：关"
+echo "  · API 代理：留空，或填 https://api.aicoming.top/v1"
+echo "  · 禁止填：https://aicoming.top/v1"
+echo ""
+echo "然后直接聊天，不必点「检查」（检查在客户端模式下会走浏览器）。"
+echo ""
+open "http://127.0.0.1:3010/settings?active=storage" 2>/dev/null || true

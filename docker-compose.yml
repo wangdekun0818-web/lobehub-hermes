@@ -1,0 +1,16 @@
+services:
+  lobehub:
+    image: lobehub/lobe-chat:latest
+    container_name: lobehub-hermes
+    restart: unless-stopped
+    ports:
+      - "3010:3210"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
+    environment:
+      OPENAI_PROXY_URL: ${OPENAI_PROXY_URL:-https://api.aicoming.top/v1}
+      OPENAI_MODEL_LIST: ${OPENAI_MODEL_LIST:--all,-gpt-5-nano,-gpt-5-mini,+gpt-5.4=GPT-5.4 (AIComing),+gpt-5.5=GPT-5.5 (AIComing)}
+      DEFAULT_AGENT_CONFIG: ${DEFAULT_AGENT_CONFIG:-model=gpt-5.4;provider=openai}
+      SYSTEM_AGENT: ${SYSTEM_AGENT:-default=openai/gpt-5.4}

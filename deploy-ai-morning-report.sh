@@ -1,66 +1,41 @@
 #!/usr/bin/env bash
-# 将 OpenClaw 早报规范部署到 LobeHub 云端 Agent「拾光人」
+# 将 OpenClaw 早报规范部署到 LobeHub 云端 Agent「拾光人」（6 段流水线）
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
+AMR="${DIR}/ai-morning-report"
 AGENT_URL="https://app.lobehub.com/agent/agt_aA2TWAEo3grI/tpc_6bMGaY4IUCTX"
 PROFILE_URL="https://app.lobehub.com/agent/agt_aA2TWAEo3grI/profile"
-PROMPT_FILE="$DIR/ai-morning-report-prompt.txt"
-INSTRUCTIONS_FILE="$DIR/agent-instructions-ai-morning-report.txt"
-TRIGGER_FILE="$DIR/scheduled-task-trigger.txt"
+TASK_URL="https://app.lobehub.com/agent/agt_aA2TWAEo3grI/task/T-1"
+INSTRUCTIONS_FILE="${DIR}/agent-instructions-ai-morning-report.txt"
+
+echo "==> 生成 6 段定时任务 prompt"
+python3 "${AMR}/build-scheduled-tasks.py"
+
+MERGE_FILE="${AMR}/scheduled-tasks/merge-task.txt"
 TODAY="$(TZ=Asia/Shanghai date +%Y-%m-%d)"
 
-# 合并定时任务完整 prompt（触发语 + 正文规范）
-TASK_PROMPT="$(cat "$TRIGGER_FILE" | sed "s/YYYY-MM-DD/$TODAY/g")
-$(cat "$PROMPT_FILE")"
-
+echo ""
 echo "=============================================="
-echo " LobeHub 云端 · AI 早报部署"
+echo " LobeHub 云端 · AI 情报早报（6 段流水线）"
 echo " Agent: 拾光人 (agt_aA2TWAEo3grI)"
+echo " 合稿发送: 每天 08:00 Asia/Shanghai"
 echo "=============================================="
 echo ""
-echo "【步骤 1】打开 Agent 页面（需已登录 app.lobehub.com）"
-echo "  $AGENT_URL"
+echo "【步骤 1】系统指令 → ${PROFILE_URL}"
+echo "  文件: agent-instructions-ai-morning-report.txt"
 echo ""
-echo "【步骤 2】打开助理档案页，粘贴系统指令"
-echo "  $PROFILE_URL"
-echo "  文件：agent-instructions-ai-morning-report.txt"
+echo "【步骤 2】模型 gpt-5.5 + 启用联网搜索/网页浏览"
 echo ""
-echo "【步骤 3】Agent 设置 → 模型"
-echo "  选择 gpt-5.5（AIComing 直连或 Hermes 8642 代理）"
+echo "【步骤 3】创建 6 个定时任务（见 README-ai-morning-report.md 时间表）"
+echo "  任务正文: ${AMR}/scheduled-tasks/*-task.txt"
 echo ""
-echo "【步骤 4】Agent 设置 → 工具 / 插件"
-echo "  启用「联网搜索」「网页浏览」"
+echo "【步骤 4】先「立即运行」采集任务，再测合稿"
 echo ""
-echo "【步骤 5】左侧面板 → 定时任务 → 添加定时任务"
-echo "  · 名称：AI 情报日报"
-echo "  · 频率：每天"
-echo "  · 时间：08:30"
-echo "  · 时区：Asia/Shanghai"
-echo "  · 任务内容：见下方「完整任务 Prompt」（已复制到剪贴板）"
-echo "  · 最大执行次数：留空（不限）"
-echo ""
-echo "【步骤 6】保存后，点「立即运行」测试一次"
-echo ""
-echo "----------------------------------------------"
-echo "文件位置："
-echo "  系统指令  → $INSTRUCTIONS_FILE"
-echo "  完整规范  → $PROMPT_FILE"
-echo "  今日任务  → 已合并写入剪贴板"
-echo "----------------------------------------------"
 
 if command -v pbcopy >/dev/null 2>&1; then
-  printf '%s' "$TASK_PROMPT" | pbcopy
-  echo "✓ 完整定时任务 Prompt 已复制到剪贴板（含今日日期 $TODAY）"
+  pbcopy < "$MERGE_FILE"
+  echo "✓ 合稿任务 prompt 已复制到剪贴板（${TODAY}）"
 fi
 
-if command -v pbcopy >/dev/null 2>&1; then
-  echo ""
-  read -r -p "是否复制「系统指令」到剪贴板？(y/N) " ans
-  if [[ "${ans,,}" == "y" ]]; then
-    pbcopy < "$INSTRUCTIONS_FILE"
-    echo "✓ 系统指令已复制"
-  fi
-fi
-
-open "$AGENT_URL" 2>/dev/null || true
+open "$TASK_URL" 2>/dev/null || open "$AGENT_URL" 2>/dev/null || true
