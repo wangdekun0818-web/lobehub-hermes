@@ -92,13 +92,15 @@ Hermes 侧启用：`bash ~/Projects/librechat-hermes/ai-morning-report/setup-ai-
 
 成稿生成后，通过 HTTP 接口把**完整 Markdown 正文**写入 LobeHub 聊天页（默认话题 `NHODLDqg`）。
 
-### 1. 启动 API
+### 1. 依赖与启动 API
 
 ```bash
+pip3 install -r ~/Projects/lobehub-hermes/ai-morning-report/requirements-lobehub-deliver.txt
+python3 -m playwright install chromium
 bash ~/Projects/lobehub-hermes/start-lobehub-deliver-api.sh
 ```
 
-默认监听 `http://127.0.0.1:8765`。环境变量见 `ai-morning-report/.env.example`。
+默认监听 `http://127.0.0.1:8765`，投递后端为 **Playwright + IndexedDB**（`LOBEHUB_DELIVER_BACKEND=playwright`）。环境变量见 `ai-morning-report/.env.example`。
 
 ### 2. 投递今日早报
 
@@ -134,7 +136,13 @@ bash ~/Projects/lobehub-hermes/ai-morning-report/call-lobehub-deliver-api.sh 202
 | POST | `/v1/deliver/morning-report` | 投递早报（`date` 或 `content`） |
 | POST | `/v1/deliver/message` | 投递任意 Markdown 消息 |
 
-> 本地 LobeHub 使用浏览器 IndexedDB 存储；API 通过 `agent-browser` 写入目标话题后刷新页面即可看到消息。
+> 本地 LobeHub 使用浏览器 IndexedDB 存储。投递写入专用 Chrome Profile（默认 `~/.hermes/lobehub-browser-profile`）。**要在页面里看到早报，请用该 Profile 打开 LobeHub**（与日常 Chrome 标签页不共享 IndexedDB）：
+>
+> ```bash
+> open -na "Google Chrome" --args \
+>   --user-data-dir=$HOME/.hermes/lobehub-browser-profile \
+>   "http://127.0.0.1:3010/chat?session=inbox&topic=NHODLDqg"
+> ```
 
 ## 权威源
 

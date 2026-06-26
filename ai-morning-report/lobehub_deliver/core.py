@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import random
+import shutil
 import string
 import subprocess
 import time
@@ -18,6 +19,11 @@ DEFAULT_TOPIC = os.getenv("LOBEHUB_TOPIC_ID", "NHODLDqg")
 DEFAULT_MODEL = os.getenv("LOBEHUB_DELIVER_MODEL", "gpt-5.4")
 DEFAULT_PROVIDER = os.getenv("LOBEHUB_DELIVER_PROVIDER", "openai")
 BROWSER_SESSION = os.getenv("LOBEHUB_BROWSER_SESSION", "lobehub-deliver")
+BROWSER_PROFILE = os.getenv(
+    "AGENT_BROWSER_PROFILE",
+    str(Path.home() / ".hermes" / "lobehub-browser-profile"),
+)
+BROWSER_TIMEOUT = int(os.getenv("LOBEHUB_BROWSER_TIMEOUT", "120"))
 
 
 def _memory_dir() -> Path:
@@ -116,12 +122,90 @@ def _build_indexeddb_js(
 }})()"""
 
 
-def _agent_browser(*args: str) -> str:
-    cmd = ["agent-browser", "--session-name", BROWSER_SESSION, *args]
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+def _agent_browser_bin() -> str:
+    override = os.getenv("AGENT_BROWSER_BIN", "").strip()
+    if override:
+        return override
+    for candidate in (
+        Path.home() / ".npm-global/bin/agent-browser",
+        Path("/opt/homebrew/bin/agent-browser"),
+        Path("/usr/local/bin/agent-browser"),
+    ):
+        if candidate.is_file():
+            return str(candidate)
+    found = shutil.which("agent-browser")
+    if found:
+        return found
+    raise FileNotFoundError(
+        "agent-browser not found; npm i -g agent-browser or set AGENT_BROWSER_BIN"
+    )
+
+
+def _browser_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env["PATH"] = f"{Path.home() / '.npm-global' / 'bin'}:/opt/homebrew/bin:/usr/local/bin:{env.get('PATH', '')}"
+    if BROWSER_PROFILE:
+        env["AGENT_BROWSER_PROFILE"] = BROWSER_PROFILE
+    return env
+
+
+def _agent_browser(*args: str, timeout: int | None = None) -> str:
+    cmd = [_agent_browser_bin(), "--session-name", BROWSER_SESSION, *args]
+    proc = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=timeout or BROWSER_TIMEOUT,
+        env=_browser_env(),
+    )
     if proc.returncode != 0:
         raise RuntimeError(f"agent-browser {' '.join(args)}:\n{proc.stderr or proc.stdout}")
     return proc.stdout.strip()
+
+
+def _reset_browser_session() -> None:
+    """Best-effort cleanup before an agent-browser deliver run."""
+    try:
+        subprocess.run(
+            [_agent_browser_bin(), "close", "--all"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=15,
+            env=_browser_env(),
+        )
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+    Path(BROWSER_PROFILE).expanduser().mkdir(parents=True, exist_ok=True)
+
+
+def _deliver_via_playwright(url: str, js: str, *, reload: bool) -> str:
+    from playwright.sync_api import sync_playwright
+
+    profile = Path(BROWSER_PROFILE).expanduser()
+    profile.mkdir(parents=True, exist_ok=True)
+
+    with sync_playwright() as playwright:
+        context = playwright.chromium.launch_persistent_context(
+            user_data_dir=str(profile),
+            headless=True,
+            viewport={"width": 1280, "height": 900},
+        )
+        try:
+            page = context.pages[0] if context.pages else context.new_page()
+            page.goto(url, wait_until="networkidle", timeout=90_000)
+            page.wait_for_timeout(1500)
+            result_raw = page.evaluate(js)
+            if reload:
+                page.reload(wait_until="networkidle", timeout=90_000)
+                page.wait_for_timeout(1000)
+        finally:
+            context.close()
+
+    if isinstance(result_raw, str):
+        return result_raw
+    return json.dumps(result_raw, ensure_ascii=False)
 
 
 def deliver(
@@ -151,22 +235,28 @@ def deliver(
         provider=provider,
     )
 
-    _agent_browser("open", url)
-    _agent_browser("wait", "--load", "networkidle")
-    time.sleep(1.5)
-    result_raw = _agent_browser("eval", js)
+    backend = os.getenv("LOBEHUB_DELIVER_BACKEND", "playwright").strip().lower()
+
+    if backend == "agent-browser":
+        _reset_browser_session()
+        _agent_browser("open", url)
+        _agent_browser("wait", "--load", "networkidle", timeout=90)
+        time.sleep(1.5)
+        result_raw = _agent_browser("eval", js)
+        if reload:
+            _agent_browser("eval", "location.reload()")
+            time.sleep(1)
+    else:
+        result_raw = _deliver_via_playwright(url, js, reload=reload)
+
     try:
         result = json.loads(result_raw)
     except json.JSONDecodeError:
         result = {"ok": True, "raw": result_raw}
 
-    if reload:
-        _agent_browser("eval", "location.reload()")
-        time.sleep(1)
-
     return {
         "ok": bool(result.get("ok", True)),
-        "backend": "indexeddb",
+        "backend": backend if backend == "agent-browser" else "indexeddb+playwright",
         "url": url,
         "session_id": session_id,
         "topic_id": topic_id,
